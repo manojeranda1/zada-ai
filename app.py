@@ -5,9 +5,13 @@ from PIL import Image, ImageFilter, ImageEnhance  # Add ImageFilter and ImageEnh
 import rembg
 import logging
 from werkzeug.utils import secure_filename
+from flask_cors import CORS  # Import CORS
 
 # Create Flask app with static folder configuration
 app = Flask(__name__, static_url_path='', static_folder='static')
+
+# Enable CORS for the app
+CORS(app)
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
