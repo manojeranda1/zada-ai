@@ -139,18 +139,14 @@
             const downloadBtn = document.getElementById('downloadBtn');
             const errorMessage = document.getElementById('errorMessage');
             
-            // API endpoint URL - relative path works when served from Flask
             const API_URL = '/api/remove-background';
             
-            // Setup file selection
             selectBtn.addEventListener('click', () => {
                 fileInput.click();
             });
             
-            // Handle file selection
             fileInput.addEventListener('change', handleFileSelect);
             
-            // Setup drag and drop
             dropZone.addEventListener('dragover', function(e) {
                 e.preventDefault();
                 dropZone.style.borderColor = '#007bff';
@@ -169,7 +165,6 @@
                 }
             });
             
-            // Process button click
             processBtn.addEventListener('click', processImage);
             
             function handleFileSelect(e) {
@@ -179,16 +174,13 @@
             function handleFiles(files) {
                 const file = files[0];
                 
-                // Check if the file is an image
                 if (!file.type.match('image.*')) {
                     showError('Please select an image file (PNG, JPG, JPEG, or WEBP).');
                     return;
                 }
                 
-                // Reset error message
                 hideError();
                 
-                // Display original image preview
                 const reader = new FileReader();
                 reader.onload = function(e) {
                     originalPreview.src = e.target.result;
@@ -201,21 +193,17 @@
             }
             
             function processImage() {
-                // Check if a file is selected
                 if (!fileInput.files.length) {
                     showError('Please select an image first.');
                     return;
                 }
                 
-                // Show loading indicator
                 loadingIndicator.style.display = 'block';
                 processBtn.disabled = true;
                 
-                // Create form data
                 const formData = new FormData();
                 formData.append('image', fileInput.files[0]);
                 
-                // Send request to API
                 fetch(API_URL, {
                     method: 'POST',
                     body: formData
@@ -229,21 +217,24 @@
                     return response.blob();
                 })
                 .then(blob => {
-                    // Display processed image
                     const imageUrl = URL.createObjectURL(blob);
                     processedPreview.src = imageUrl;
                     processedPreview.style.display = 'block';
                     
-                    // Set download link
+                    // Generate random text for the filename
+                    const randomText = Math.random().toString(36).substring(2, 10); // Random 8-character string
+                    const originalFilename = fileInput.files[0].name;
+                    const extension = originalFilename.split('.').pop(); // Get file extension
+                    
+                    // Set download link with random text
                     downloadBtn.href = imageUrl;
+                    downloadBtn.download = `processed_${randomText}.${extension}`;
                     downloadBtn.style.display = 'inline-block';
                     
-                    // Hide loading indicator
                     loadingIndicator.style.display = 'none';
                     processBtn.disabled = false;
                 })
                 .catch(error => {
-                    // Handle errors
                     console.error('Error:', error);
                     showError(error.message || 'Failed to process image. Please try again.');
                     loadingIndicator.style.display = 'none';

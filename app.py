@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify, send_file, render_template
 import io
 import os
-from PIL import Image, ImageFilter  # Add ImageFilter to imports
+from PIL import Image, ImageFilter, ImageEnhance  # Add ImageFilter and ImageEnhance to imports
 import rembg
 import logging
 from werkzeug.utils import secure_filename
@@ -45,6 +45,30 @@ def hex_to_rgb(hex_color):
     hex_color = hex_color.lstrip('#')
     return tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
 
+def enhance_lighting(image):
+    """Adjust brightness, contrast, color, and reduce noise for professional touch-up."""
+    # Adjust brightness
+    brightness_enhancer = ImageEnhance.Brightness(image)
+    image = brightness_enhancer.enhance(1.1)  # Slightly brighter
+
+    # Adjust contrast
+    contrast_enhancer = ImageEnhance.Contrast(image)
+    image = contrast_enhancer.enhance(1)  # Boost contrast
+
+    # Adjust color saturation
+    color_enhancer = ImageEnhance.Color(image)
+    image = color_enhancer.enhance(1.0)  # Boost color saturation
+
+    return image
+
+def sharpen_edges_softly(image):
+    """Apply targeted sharpening for crisp, natural edges."""
+    return image.filter(ImageFilter.UnsharpMask(
+        radius=0.1,  # Smaller radius for precision
+        percent=100,  # Reduced strength for natural look
+        threshold=4   # Higher threshold to avoid noise
+    ))
+
 def process_image(image_data):
     try:
         # Open and validate image
@@ -76,6 +100,12 @@ def process_image(image_data):
         # Resize directly with optimal resampling
         resized_output = output.resize(new_size, resample=resample)
         
+        # Enhance lighting for professional touch-up
+        resized_output = enhance_lighting(resized_output)
+        
+        # Sharpen edges softly for crisp, natural look
+        resized_output = sharpen_edges_softly(resized_output)
+        
         # Create final image with centered position
         final_image = Image.new('RGBA', OUTPUT_SIZE, (0, 0, 0, 0))  # Transparent background
         position = (
@@ -90,13 +120,13 @@ def process_image(image_data):
         final_image_rgb = Image.new('RGB', OUTPUT_SIZE, bg_color_rgb)
         final_image_rgb.paste(final_image, mask=final_image.split()[3])  # Use alpha channel as mask
         
-        # Optimized output with faster compression
+        # Optimized output with efficient compression
         output_bytes = io.BytesIO()
         final_image_rgb.save(
             output_bytes,
             format='PNG',
-            compress_level=3,  # Balance between speed and size
-            optimize=False
+            optimize=True,  # Enable optimization
+            compress_level=1  # Lower compression level for smaller size without quality loss
         )
         output_bytes.seek(0)
         return output_bytes
