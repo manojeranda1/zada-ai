@@ -11,7 +11,7 @@ from flask_cors import CORS  # Import CORS
 app = Flask(__name__, static_url_path='', static_folder='static')
 
 # Enable CORS for the app
-CORS(app)
+CORS(app, resources={r"/*": {"origins": "*"}})
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -35,6 +35,11 @@ def before_first_request_func():
         # Your code that you want to run only once
         initialize_session()  # Initialize the AI model session
         first_request_processed = True
+
+@app.before_request
+def log_request_info():
+    logger.info(f"Headers: {request.headers}")
+    logger.info(f"Body: {request.get_data()}")
 
 # The rest of your code follows
 def initialize_session():
